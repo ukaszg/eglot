@@ -2624,20 +2624,28 @@ code actions at point"
 (defclass eglot-eclipse-jdt (eglot-lsp-server) ()
   :documentation "Eclipse's Java Development Tools Language Server.")
 
+(defvar eglot-jdt-workspace-folders nil "Alist of project-root and list of it's workspaceFolders.")
+
 (cl-defmethod eglot-initialization-options ((server eglot-eclipse-jdt))
   "Passes through required jdt initialization options"
   `(:workspaceFolders
-    [,@(cl-delete-duplicates
-        (mapcar #'eglot--path-to-uri
-                (let* ((root (project-root (eglot--project server))))
-                  (cons root
-                        (mapcar
-                         #'file-name-directory
-                         (append
-                          (file-expand-wildcards (concat root "*/pom.xml"))
-                          (file-expand-wildcards (concat root "*/build.gradle"))
-                          (file-expand-wildcards (concat root "*/.project")))))))
-        :test #'string=)]
+       [,@(cl-delete-duplicates
+              (mapcar #'eglot--path-to-uri
+                  (let* ((root (project-root (eglot--project server)))
+                         (top root)
+                         candidate)
+                      (while (file-exists-p (setq candidate (expand-file-name "../pom.xml" top)))
+                          (setq top (file-name-directory candidate))
+                          (message "looking for root: %s" top))
+                      (or (cl-assoc top eglot-jdt-workspace-folders :test #'string=)
+                          (cons root
+                              (mapcar
+                                  #'file-name-directory
+                                  (append
+                                      (file-expand-wildcards (concat root "*/pom.xml"))
+                                      (file-expand-wildcards (concat root "*/build.gradle"))
+                                      (file-expand-wildcards (concat root "*/.project"))))))))
+              :test #'string=)]
     ,@(if-let ((home (or (getenv "JAVA_HOME")
                          (ignore-errors
                            (expand-file-name
