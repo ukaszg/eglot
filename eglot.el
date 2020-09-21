@@ -2634,6 +2634,7 @@ code actions at point"
                   (let* ((root (project-root (eglot--project server)))
                          (top root)
                          candidate)
+                      (message root)
                       (while (file-exists-p (setq candidate (expand-file-name "../pom.xml" top)))
                           (setq top (file-name-directory candidate))
                           (message "looking for root: %s" top))
