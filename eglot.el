@@ -2631,7 +2631,7 @@ code actions at point"
   `(:workspaceFolders
        [,@(cl-delete-duplicates
               (mapcar #'eglot--path-to-uri
-                  (let* ((root (projectile-project-root (eglot--project server)))
+                  (let* ((root (projectile-project-root (default-directory)))
                          (top root)
                          candidate)
                       (message root)
